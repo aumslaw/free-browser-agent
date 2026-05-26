@@ -1,0 +1,87 @@
+/* src/sidepanel/styles.css
+ * Tailwind directives + global overrides for the side-panel chat UI.
+ * Dark mode is the default (html.dark class applied by App.tsx on mount).
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- scrollbar customisation (Webkit) ---- */
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    @apply h-full w-full m-0 p-0 overflow-hidden;
+    @apply bg-gray-950 text-gray-100;
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Slim scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-900;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+}
+
+/* ---- chat message bubbles ---- */
+@layer components {
+  .msg-bubble {
+    @apply max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed break-words;
+  }
+
+  .msg-user {
+    @apply msg-bubble bg-brand-600 text-white self-end rounded-br-sm;
+  }
+
+  .msg-assistant {
+    @apply msg-bubble bg-gray-800 text-gray-100 self-start rounded-bl-sm;
+  }
+
+  .msg-tool {
+    @apply w-full rounded-xl px-3 py-2 text-xs font-mono
+           bg-gray-900/80 border border-gray-700/60 text-gray-400
+           self-start;
+  }
+
+  .msg-system-note {
+    @apply w-full text-center text-xs text-gray-500 py-1;
+  }
+
+  /* "X-Routed-Via" badge */
+  .routing-badge {
+    @apply inline-flex items-center gap-1 mt-1.5 px-2 py-0.5
+           text-[10px] font-mono text-brand-400
+           bg-brand-950/60 border border-brand-800/40 rounded-full;
+  }
+
+  /* Typing / streaming cursor */
+  .typing-cursor::after {
+    content: "▍";
+    @apply inline-block text-brand-400 animate-pulse;
+  }
+}
+
+/* ---- focus ring override ---- */
+@layer utilities {
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-950;
+  }
+}
