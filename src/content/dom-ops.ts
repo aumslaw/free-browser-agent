@@ -191,7 +191,13 @@ export function type(selector: SelectorSpec, text: string): TypeResult {
     return { ok: true };
   }
 
-  if ((el as HTMLElement).isContentEditable) {
+  // Detect contenteditable via the property (true for inherited editability) OR
+  // the attribute (`contenteditable=""` / `"true"`). The attribute fallback is
+  // load-bearing: `isContentEditable` is undefined until layout is computed and
+  // is unimplemented in some DOM environments, so the property alone misses
+  // genuinely-editable elements.
+  const ceAttr = (el as HTMLElement).getAttribute("contenteditable");
+  if ((el as HTMLElement).isContentEditable || ceAttr === "" || ceAttr === "true") {
     (el as HTMLElement).focus();
     (el as HTMLElement).textContent = text;
     el.dispatchEvent(new Event("input", { bubbles: true }));

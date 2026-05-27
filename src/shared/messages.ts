@@ -159,6 +159,17 @@ export interface BgTestKeyMessage {
   id: string;
 }
 
+/** Trigger OpenRouter OAuth PKCE onboarding flow. */
+export interface BgOnboardOpenRouterMessage {
+  kind: "ONBOARD_OPENROUTER";
+}
+
+/** Trigger auto-provision onboarding for a specific provider. */
+export interface BgOnboardAutoProvisionMessage {
+  kind: "ONBOARD_AUTOPROVISION";
+  provider: "google" | "groq";
+}
+
 export type BackgroundMessage =
   | BgStartAgentMessage
   | BgStopAgentMessage
@@ -167,7 +178,9 @@ export type BackgroundMessage =
   | BgListKeysMessage
   | BgGetPriorityMessage
   | BgSetPriorityMessage
-  | BgTestKeyMessage;
+  | BgTestKeyMessage
+  | BgOnboardOpenRouterMessage
+  | BgOnboardAutoProvisionMessage;
 
 /** Generic success/error wrapper for background responses. */
 export type BackgroundResponse<T = unknown> =

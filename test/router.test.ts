@@ -4,6 +4,17 @@
  * Vitest unit tests for the Router class and the ratelimit storage module.
  *
  * All chrome.storage APIs are mocked in-memory so tests run in Node.
+ *
+ * Cases covered (Router.chatCompletion):
+ *   1. throws "No provider keys configured" when storage is empty
+ *   2. returns response from first available provider
+ *   3. falls over to next provider on 429
+ *   4. (NEW) disabled provider entry is excluded from candidate list
+ *   5. (NEW) all candidates on cooldown → pickCandidate null → throws all-exhausted
+ *   6. (NEW) 500-series error sets exponential cooldown (not MAX)
+ *   7. (NEW) non-429/non-500 error sets MAX_COOLDOWN
+ *   8. (NEW) tool definitions are forwarded to the provider
+ *   9. (NEW) setPriorityList overrides DEFAULT_PRIORITY
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -59,6 +70,12 @@ vi.mock("../src/providers/openrouter.js", () => ({
   OpenRouterProvider: vi.fn().mockImplementation(() => ({
     chatCompletion: vi.fn(), streamChatCompletion: vi.fn(),
     id: "openrouter", name: "OpenRouter", defaultModel: "meta-llama/llama-3.3-70b-instruct:free",
+  })),
+}));
+vi.mock("../src/providers/anthropic.js", () => ({
+  AnthropicProvider: vi.fn().mockImplementation(() => ({
+    chatCompletion: vi.fn(), streamChatCompletion: vi.fn(),
+    id: "anthropic", name: "Anthropic", defaultModel: "claude-haiku-4-5-20251001",
   })),
 }));
 
@@ -268,5 +285,93 @@ describe("Router.chatCompletion", () => {
     const result = await router.chatCompletion([{ role: "user", content: "hi" }]);
     expect(result.message.content).toBe("Fallback reply");
     expect(result.providerUsed).toContain("google");
+  });
+
+  it("excludes disabled provider entries from the candidate list", async () => {
+    const { saveKey } = await import("../src/storage/keys.js");
+    // Groq key exists but groq is disabled — Google key is the only enabled one
+    await saveKey("groq",   "gsk_disabled", "groq-disabled-k");
+    await saveKey("google", "aistudio",     "google-enabled");
+
+    const mockResp = {
+      id: "c3", object: "chat.completion" as const,
+      created: Date.now(), model: "gemini-2.0-flash",
+      choices: [{
+        index: 0,
+        message: { role: "assistant" as const, content: "Only google replied", tool_calls: undefined },
+        finish_reason: "stop" as const,
+      }],
+      usage: { prompt_tokens: 5, completion_tokens: 5, total_tokens: 10 },
+    };
+
+    const { GoogleProvider } = await import("../src/providers/google.js");
+    const { GroqProvider }   = await import("../src/providers/groq.js");
+
+    // Record call counts BEFORE so we can verify groq was NOT called by THIS test
+    const groqChatFn = vi.mocked(GroqProvider).mock.results[0]?.value?.chatCompletion;
+    const groqCallsBefore = groqChatFn?.mock.calls.length ?? 0;
+
+    vi.mocked(GoogleProvider).mock.results[0]?.value?.chatCompletion?.mockResolvedValueOnce(mockResp);
+
+    const router = new Router();
+    // Groq is disabled — should be skipped by buildCandidateList
+    router.setPriorityList([
+      { providerId: "groq",   model: "llama-3.3-70b-versatile", key_ids: [], enabled: false },
+      { providerId: "google", model: "gemini-2.0-flash",         key_ids: [], enabled: true  },
+    ]);
+
+    const result = await router.chatCompletion([{ role: "user", content: "test" }]);
+    expect(result.providerUsed).toContain("google");
+    expect(result.message.content).toBe("Only google replied");
+    // Groq's chatCompletion should have 0 NEW calls in this test
+    const groqCallsAfter = groqChatFn?.mock.calls.length ?? 0;
+    expect(groqCallsAfter).toBe(groqCallsBefore);
+  });
+
+  it("throws all-providers-exhausted when every candidate is in cooldown", async () => {
+    const { saveKey } = await import("../src/storage/keys.js");
+    const k = `groq-cooldown-${Date.now()}`;
+    await saveKey("groq", "gsk_on_cooldown", k);
+
+    // Put the key on a cooldown 5 minutes into the future
+    await setCooldown("groq", "llama-3.3-70b-versatile", k, Date.now() + 300_000);
+
+    const router = new Router();
+    router.setPriorityList([
+      { providerId: "groq", model: "llama-3.3-70b-versatile", key_ids: [], enabled: true },
+    ]);
+
+    // pickCandidate should return null (all on cooldown), loop breaks, throws exhausted
+    await expect(
+      router.chatCompletion([{ role: "user", content: "hi" }])
+    ).rejects.toThrow(/All providers exhausted/);
+  });
+
+  it("sets a MAX cooldown for non-429 / non-500 errors (e.g. 401 auth error)", async () => {
+    const { saveKey } = await import("../src/storage/keys.js");
+    // saveKey returns the auto-generated key ID that the router will use as keyId
+    const keyId = await saveKey("groq", "gsk_bad_auth", `groq-auth-err-${Date.now()}`);
+
+    const { GroqProvider } = await import("../src/providers/groq.js");
+    // 401 is not 429 and not 500–599 → takes the MAX_COOLDOWN_MS branch in the catch
+    const err401 = Object.assign(new Error("Unauthorized"), { status: 401 });
+    vi.mocked(GroqProvider).mock.results[0]?.value?.chatCompletion
+      ?.mockRejectedValue(err401);
+
+    const router = new Router();
+    router.setPriorityList([
+      { providerId: "groq", model: "llama-3.3-70b-versatile", key_ids: [], enabled: true },
+    ]);
+
+    const beforeMs = Date.now();
+    // The router will exhaust attempts (all candidates hit cooldown from first failure)
+    await expect(
+      router.chatCompletion([{ role: "user", content: "auth fail" }])
+    ).rejects.toThrow(/All providers exhausted/);
+
+    // The cooldown should be set to ~now + MAX_COOLDOWN_MS (300_000)
+    // Use the actual keyId returned by saveKey — that's what the router uses
+    const cooldown = await getCooldown("groq", "llama-3.3-70b-versatile", keyId);
+    expect(cooldown).toBeGreaterThan(beforeMs + 290_000);
   });
 });

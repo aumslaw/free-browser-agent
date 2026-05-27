@@ -17,7 +17,9 @@ export type ProviderId =
   | "google"
   | "groq"
   | "cerebras"
-  | "openrouter";
+  | "openrouter"
+  | "anthropic"
+  | "chrome-ai";
 
 // ---------------------------------------------------------------------------
 // OpenAI-compatible message shapes

@@ -33,4 +33,11 @@ for (const html of ["sidepanel.html", "options.html"]) {
   }
 }
 
+// Flatten offscreen.html (Vite emits it under src/offscreen/offscreen.html)
+const offscreenNested = join(DIST, "src", "offscreen", "offscreen.html");
+const offscreenFlat = join(DIST, "offscreen.html");
+if (existsSync(offscreenNested) && !existsSync(offscreenFlat)) {
+  cpSync(offscreenNested, offscreenFlat);
+}
+
 console.log("[build] done — dist/ ready to load as unpacked extension.");

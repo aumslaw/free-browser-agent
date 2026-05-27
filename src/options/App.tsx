@@ -11,6 +11,7 @@
 import { h, Fragment, render, type ComponentChildren } from "preact";
 import { useEffect, useState, useCallback } from "preact/hooks";
 import type { ProviderId, StoredKey, ProviderPriorityList } from "../shared/types.js";
+import { isChromeAIAvailable } from "../providers/chrome-ai.js";
 
 // ---------------------------------------------------------------------------
 // Styles (inline — options page loads independently of sidepanel)
@@ -61,6 +62,240 @@ const PROVIDERS: ProviderMeta[] = [
     placeholder: "sk-or-…",
   },
 ];
+
+// ---------------------------------------------------------------------------
+// OnboardingSection — 3 quick-start paths at the top of the page
+// ---------------------------------------------------------------------------
+
+function OnboardingSection() {
+  const [orStatus, setOrStatus] = useState<string | null>(null);
+  const [orWorking, setOrWorking] = useState(false);
+
+  const [chromeAiStatus, setChromeAiStatus] = useState<string | null>(null);
+  const [chromeAiWorking, setChromeAiWorking] = useState(false);
+
+  const [apProvider, setApProvider] = useState<"google" | "groq">("google");
+  const [apStatus, setApStatus] = useState<string | null>(null);
+  const [apWorking, setApWorking] = useState(false);
+
+  const handleOpenRouter = async () => {
+    setOrWorking(true);
+    setOrStatus(null);
+    try {
+      const result = await chrome.runtime.sendMessage({ kind: "ONBOARD_OPENROUTER" }) as
+        | { ok: boolean; keyId?: string; error?: string }
+        | undefined;
+      if (result?.ok) {
+        setOrStatus("Connected! Key saved (id: " + (result.keyId ?? "?") + ").");
+      } else {
+        setOrStatus("Error: " + (result?.error ?? "Unknown error"));
+      }
+    } catch (err) {
+      setOrStatus("Error: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setOrWorking(false);
+    }
+  };
+
+  const handleChromeAI = async () => {
+    setChromeAiWorking(true);
+    setChromeAiStatus(null);
+    try {
+      const available = await isChromeAIAvailable();
+      if (available) {
+        setChromeAiStatus(
+          "Gemini Nano is available and ready — no login needed. " +
+          "It is already first in your fallback chain.",
+        );
+      } else {
+        setChromeAiStatus(
+          "Gemini Nano is not available in this browser. " +
+          "To enable it: open chrome://flags, search for 'Prompt API', enable it, " +
+          "then restart Chrome. You may also need to go to chrome://components and " +
+          "update 'Optimization Guide On Device Model'.",
+        );
+      }
+    } catch (err) {
+      setChromeAiStatus("Error checking availability: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setChromeAiWorking(false);
+    }
+  };
+
+  const handleAutoProvision = async () => {
+    setApWorking(true);
+    setApStatus(null);
+    try {
+      const result = await chrome.runtime.sendMessage({
+        kind: "ONBOARD_AUTOPROVISION",
+        provider: apProvider,
+      }) as { ok: boolean; keyId?: string; error?: string } | undefined;
+      if (result?.ok) {
+        setApStatus("Key provisioned for " + apProvider + "! Key id: " + (result.keyId ?? "?"));
+      } else {
+        setApStatus("Error: " + (result?.error ?? "Unknown error"));
+      }
+    } catch (err) {
+      setApStatus("Error: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setApWorking(false);
+    }
+  };
+
+  const btnBase: h.JSX.CSSProperties = {
+    border: "none",
+    borderRadius: "6px",
+    padding: "8px 16px",
+    fontSize: "13px",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "background 0.15s",
+  };
+
+  return (
+    <section>
+      <SectionTitle>Quick Start — Get Running in Seconds</SectionTitle>
+      <p style={{ fontSize: "12px", color: "#6b7280", margin: "0 0 16px" }}>
+        Pick one of the three paths below to connect a model. No setup required for Chrome AI.
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+
+        {/* Path 1 — OpenRouter OAuth */}
+        <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "10px", padding: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+            <span style={{ fontSize: "18px" }}>🔑</span>
+            <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "13px" }}>
+              Sign in with OpenRouter
+            </span>
+            <span style={{ fontSize: "11px", color: "#6b7280" }}>
+              — free account, 20+ models
+            </span>
+          </div>
+          <p style={{ fontSize: "12px", color: "#9ca3af", margin: "0 0 10px" }}>
+            Authenticates via OAuth. No key copy-paste needed.
+          </p>
+          <button
+            onClick={handleOpenRouter}
+            disabled={orWorking}
+            style={{
+              ...btnBase,
+              background: orWorking ? "#374151" : "#7c3aed",
+              color: orWorking ? "#6b7280" : "#fff",
+              cursor: orWorking ? "not-allowed" : "pointer",
+            }}
+          >
+            {orWorking ? "Connecting…" : "Sign in with OpenRouter"}
+          </button>
+          {orStatus && (
+            <p style={{
+              fontSize: "12px",
+              color: orStatus.startsWith("Error") ? "#f87171" : "#4ade80",
+              margin: "8px 0 0",
+            }}>
+              {orStatus}
+            </p>
+          )}
+        </div>
+
+        {/* Path 2 — Chrome built-in AI */}
+        <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "10px", padding: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+            <span style={{ fontSize: "18px" }}>🤖</span>
+            <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "13px" }}>
+              Use Chrome built-in AI
+            </span>
+            <span style={{ fontSize: "11px", color: "#6b7280" }}>
+              — Gemini Nano, on-device, no login
+            </span>
+          </div>
+          <p style={{ fontSize: "12px", color: "#9ca3af", margin: "0 0 10px" }}>
+            Runs 100% locally — no API key, no data leaves your device.
+            Requires Chrome 127+ with the Prompt API flag enabled.
+          </p>
+          <button
+            onClick={handleChromeAI}
+            disabled={chromeAiWorking}
+            style={{
+              ...btnBase,
+              background: chromeAiWorking ? "#374151" : "#059669",
+              color: chromeAiWorking ? "#6b7280" : "#fff",
+              cursor: chromeAiWorking ? "not-allowed" : "pointer",
+            }}
+          >
+            {chromeAiWorking ? "Checking…" : "Check Chrome AI availability"}
+          </button>
+          {chromeAiStatus && (
+            <p style={{
+              fontSize: "12px",
+              color: chromeAiStatus.startsWith("Gemini Nano is available") ? "#4ade80" : "#fbbf24",
+              margin: "8px 0 0",
+            }}>
+              {chromeAiStatus}
+            </p>
+          )}
+        </div>
+
+        {/* Path 3 — Auto-provision */}
+        <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "10px", padding: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+            <span style={{ fontSize: "18px" }}>⚡</span>
+            <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "13px" }}>
+              Auto-provision my keys
+            </span>
+            <span style={{ fontSize: "11px", color: "#6b7280" }}>
+              — opens provider dashboard, creates key automatically
+            </span>
+          </div>
+          <p style={{ fontSize: "12px", color: "#9ca3af", margin: "0 0 10px" }}>
+            You must already be signed in to the provider in Chrome.
+            The agent will open the API key page, click Create, and save the key.
+          </p>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <select
+              value={apProvider}
+              onChange={(e) => setApProvider((e.target as HTMLSelectElement).value as "google" | "groq")}
+              style={{
+                background: "#1e293b",
+                border: "1px solid #334155",
+                borderRadius: "6px",
+                padding: "7px 10px",
+                color: "#f1f5f9",
+                fontSize: "12px",
+                cursor: "pointer",
+              }}
+            >
+              <option value="google">Google AI Studio</option>
+              <option value="groq">Groq</option>
+            </select>
+            <button
+              onClick={handleAutoProvision}
+              disabled={apWorking}
+              style={{
+                ...btnBase,
+                background: apWorking ? "#374151" : "#d97706",
+                color: apWorking ? "#6b7280" : "#fff",
+                cursor: apWorking ? "not-allowed" : "pointer",
+              }}
+            >
+              {apWorking ? "Provisioning…" : "Auto-provision"}
+            </button>
+          </div>
+          {apStatus && (
+            <p style={{
+              fontSize: "12px",
+              color: apStatus.startsWith("Error") ? "#f87171" : "#4ade80",
+              margin: "8px 0 0",
+            }}>
+              {apStatus}
+            </p>
+          )}
+        </div>
+
+      </div>
+    </section>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Small UI atoms
@@ -592,21 +827,51 @@ export default function App() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
 
-            {/* --- API Keys --- */}
-            <section>
-              <SectionTitle>API Keys</SectionTitle>
-              <p style={{ fontSize: "12px", color: "#6b7280", marginBottom: "16px", marginTop: 0 }}>
-                Add keys for any free-tier provider. All keys are encrypted at rest using AES-256-GCM.
-              </p>
+            {/* --- Onboarding (Quick Start) --- */}
+            <OnboardingSection />
 
-              {PROVIDERS.map((provider) => (
-                <AddKeyForm
-                  key={provider.id}
-                  providerId={provider.id}
-                  onSaved={loadData}
-                />
-              ))}
-            </section>
+            {/* --- Advanced: manual key paste --- */}
+            <details>
+              <summary
+                style={{
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: "#6b7280",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  userSelect: "none",
+                  listStyle: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 0",
+                  borderBottom: "1px solid #1f2937",
+                }}
+              >
+                <span>▶</span> Advanced: paste your own keys
+              </summary>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginTop: "20px" }}>
+
+                {/* --- API Keys --- */}
+                <section>
+                  <SectionTitle>API Keys</SectionTitle>
+                  <p style={{ fontSize: "12px", color: "#6b7280", marginBottom: "16px", marginTop: 0 }}>
+                    Add keys for any free-tier provider. All keys are encrypted at rest using AES-256-GCM.
+                  </p>
+
+                  {PROVIDERS.map((provider) => (
+                    <AddKeyForm
+                      key={provider.id}
+                      providerId={provider.id}
+                      onSaved={loadData}
+                    />
+                  ))}
+                </section>
+
+              </div>
+            </details>
 
             {/* --- Saved Keys --- */}
             {storedKeys.length > 0 && (

@@ -17,6 +17,7 @@ export default defineConfig({
         content: path.resolve(__dirname, "src/content/index.ts"),
         sidepanel: path.resolve(__dirname, "src/sidepanel/index.html"),
         options: path.resolve(__dirname, "src/options/index.html"),
+        offscreen: path.resolve(__dirname, "src/offscreen/offscreen.html"),
       },
       output: {
         entryFileNames: (chunk) => {

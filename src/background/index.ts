@@ -36,6 +36,8 @@ import { runAgentLoop } from "./agent-loop.js";
 import type { Router, AgentLoopStatus } from "./agent-loop.js";
 import type { ChatMessage } from "../shared/types.js";
 import { AGENT_TOOLS } from "../shared/tools.js";
+import { connectOpenRouter } from "../onboarding/openrouter-oauth.js";
+import { autoProvision } from "../onboarding/auto-provision.js";
 
 // ── Side Panel ─────────────────────────────────────────────────────────────
 
@@ -226,6 +228,33 @@ chrome.runtime.onMessage.addListener(
     if (kind === "ping") {
       sendResponse({ ok: true, ts: Date.now() });
       return;
+    }
+
+    // ── OpenRouter OAuth onboarding ──────────────────────────────────────
+    if (kind === "ONBOARD_OPENROUTER") {
+      void (async () => {
+        try {
+          const result = await connectOpenRouter();
+          sendResponse(result);
+        } catch (err) {
+          sendResponse({ ok: false, error: err instanceof Error ? err.message : String(err) });
+        }
+      })();
+      return true; // async sendResponse
+    }
+
+    // ── Auto-provision onboarding ────────────────────────────────────────
+    if (kind === "ONBOARD_AUTOPROVISION") {
+      const { provider } = message as unknown as { provider: "google" | "groq" };
+      void (async () => {
+        try {
+          const result = await autoProvision(provider);
+          sendResponse(result);
+        } catch (err) {
+          sendResponse({ ok: false, error: err instanceof Error ? err.message : String(err) });
+        }
+      })();
+      return true; // async sendResponse
     }
 
     // Unknown message — don't send a response (avoids "port closed" warnings)

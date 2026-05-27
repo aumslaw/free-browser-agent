@@ -9,7 +9,9 @@
     "scripting",
     "storage",
     "sidePanel",
-    "debugger"
+    "debugger",
+    "identity",
+    "offscreen"
   ],
   "host_permissions": ["<all_urls>"],
   "background": {
