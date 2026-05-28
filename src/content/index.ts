@@ -24,6 +24,8 @@ import {
   getSelection,
   domDigest,
   readPage,
+  readText,
+  getElementCoords,
   type SelectorSpec,
   type ScrollTarget,
 } from "./dom-ops";
@@ -42,7 +44,9 @@ type DomOpName =
   | "getUrl"
   | "getSelection"
   | "domDigest"
-  | "readPage";
+  | "readPage"
+  | "readText"
+  | "getElementCoords";
 
 interface DomOpMessage {
   kind: "dom-op";
@@ -150,6 +154,16 @@ function dispatch(op: DomOpName, args: unknown[]): unknown {
 
     case "readPage": {
       return readPage();
+    }
+
+    case "readText": {
+      const [spec] = args as [SelectorSpec];
+      return readText(spec);
+    }
+
+    case "getElementCoords": {
+      const [spec] = args as [SelectorSpec];
+      return getElementCoords(spec);
     }
 
     default: {

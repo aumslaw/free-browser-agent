@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.18"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="128" height="128" rx="28" ry="28" fill="url(#bg)"/>
+  <!-- Inner shine overlay -->
+  <rect width="128" height="128" rx="28" ry="28" fill="url(#shine)"/>
+  <!-- Stylized agentic mark: cursor/spark glyph -->
+  <!-- Central spark / lightning bolt shape representing autonomous AI action -->
+  <!-- Top-left dot (observation) -->
+  <circle cx="42" cy="42" r="7" fill="white" opacity="0.9"/>
+  <!-- Bottom-right dot (action) -->
+  <circle cx="86" cy="86" r="7" fill="white" opacity="0.9"/>
+  <!-- Diagonal connector line -->
+  <line x1="48" y1="47" x2="80" y2="81" stroke="white" stroke-width="5" stroke-linecap="round" opacity="0.55"/>
+  <!-- Arrow head pointing toward action -->
+  <polygon points="86,68 80,81 93,80" fill="white" opacity="0.9"/>
+  <!-- Small spark accent top-right -->
+  <circle cx="88" cy="38" r="4" fill="white" opacity="0.7"/>
+  <!-- Small spark accent bottom-left -->
+  <circle cx="38" cy="90" r="4" fill="white" opacity="0.7"/>
+  <!-- Central "f" letter mark (subtle, for "free") -->
+  <!-- Actually use a clean cursor / agent node visual instead -->
+  <!-- Center hub circle -->
+  <circle cx="64" cy="64" r="9" fill="white" opacity="0.95"/>
+  <circle cx="64" cy="64" r="5" fill="#4f46e5"/>
+</svg>

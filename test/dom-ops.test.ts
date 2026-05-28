@@ -438,6 +438,98 @@ describe("readPage() — rich tag extraction", () => {
   });
 });
 
+// ── readText ──────────────────────────────────────────────────────────────────
+
+describe("readText()", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <p id="para">  Hello World  </p>
+      <input id="inp" type="text" value="input value" />
+      <textarea id="ta">textarea text</textarea>
+    `;
+    ["para", "inp", "ta"].forEach((id) => makeVisible(document.getElementById(id)!));
+  });
+
+  it("returns ok:true and trimmed textContent for a paragraph element", async () => {
+    const { readText } = await import("../src/content/dom-ops.js");
+    const result = readText("#para");
+    expect(result.ok).toBe(true);
+    expect(result.text).toBe("Hello World");
+  });
+
+  it("returns ok:true and .value for an input element", async () => {
+    const { readText } = await import("../src/content/dom-ops.js");
+    const result = readText("#inp");
+    expect(result.ok).toBe(true);
+    expect(result.text).toBe("input value");
+  });
+
+  it("returns ok:true and .value for a textarea element", async () => {
+    const { readText } = await import("../src/content/dom-ops.js");
+    const result = readText("#ta");
+    expect(result.ok).toBe(true);
+    expect(result.text).toBe("textarea text");
+  });
+
+  it("returns ok:false with error when selector matches nothing", async () => {
+    const { readText } = await import("../src/content/dom-ops.js");
+    const result = readText("#does-not-exist");
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/No visible element/);
+  });
+});
+
+// ── getElementCoords ──────────────────────────────────────────────────────────
+
+describe("getElementCoords()", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `<div id="box">target</div>`;
+  });
+
+  it("returns ok:true with viewport-center x/y for a visible element", async () => {
+    const { getElementCoords } = await import("../src/content/dom-ops.js");
+    const box = document.getElementById("box")!;
+    // rect: left=10, top=20, width=100, height=40 → center x=60, y=40
+    (box as HTMLElement).getBoundingClientRect = () => ({
+      left: 10, top: 20, width: 100, height: 40,
+      right: 110, bottom: 60, x: 10, y: 20,
+      toJSON: () => ({}),
+    } as DOMRect);
+    const result = getElementCoords("#box");
+    expect(result.ok).toBe(true);
+    expect(result.x).toBe(60);   // 10 + 100/2
+    expect(result.y).toBe(40);   // 20 + 40/2
+  });
+
+  it("returns ok:false with error for a zero-area element", async () => {
+    const { getElementCoords } = await import("../src/content/dom-ops.js");
+    const box = document.getElementById("box")!;
+    // Make it pass isVisible check (non-zero) then return zero-area from getElementCoords path
+    // isVisible uses its own getBoundingClientRect call — patch to return non-zero first,
+    // then zero-area for the getElementCoords rect check.
+    let callCount = 0;
+    (box as HTMLElement).getBoundingClientRect = () => {
+      callCount++;
+      if (callCount === 1) {
+        // First call: isVisible → non-zero so resolveElement finds it
+        return { left: 0, top: 0, width: 10, height: 10, right: 10, bottom: 10, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+      }
+      // Second call: getElementCoords rect check → zero-area
+      return { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+    };
+    const result = getElementCoords("#box");
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/zero-area/);
+  });
+
+  it("returns ok:false with error when selector matches nothing", async () => {
+    const { getElementCoords } = await import("../src/content/dom-ops.js");
+    const result = getElementCoords("#does-not-exist");
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/No visible element/);
+  });
+});
+
 // ── domDigest ─────────────────────────────────────────────────────────────────
 
 describe("domDigest()", () => {

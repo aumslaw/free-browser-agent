@@ -764,10 +764,16 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
+    // MV3 sendMessage can stay pending forever if the service worker returns
+    // `true` (async) but never calls sendResponse (e.g. SW cold-start / not yet
+    // listening). Race each call against a timeout so the settings UI never
+    // hangs on "Loading…" — a fresh profile simply renders with empty keys.
+    const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T | undefined> =>
+      Promise.race([p, new Promise<undefined>((res) => setTimeout(() => res(undefined), ms))]);
     try {
       const [keysResp, priorityResp] = await Promise.all([
-        chrome.runtime.sendMessage({ kind: "keys:list" }) as Promise<StoredKey[] | undefined>,
-        chrome.runtime.sendMessage({ kind: "priority:get" }) as Promise<ProviderPriorityList | undefined>,
+        withTimeout(chrome.runtime.sendMessage({ kind: "keys:list" }), 2500) as Promise<StoredKey[] | undefined>,
+        withTimeout(chrome.runtime.sendMessage({ kind: "priority:get" }), 2500) as Promise<ProviderPriorityList | undefined>,
       ]);
       if (keysResp) setStoredKeys(keysResp);
       if (priorityResp && priorityResp.length > 0) setPriorityList(priorityResp);

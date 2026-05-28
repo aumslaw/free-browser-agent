@@ -357,6 +357,81 @@ export function getSelection(): GetSelectionResult {
 }
 
 // ---------------------------------------------------------------------------
+// readText
+// ---------------------------------------------------------------------------
+
+export interface ReadTextResult {
+  ok: boolean;
+  text?: string;
+  error?: string;
+}
+
+/**
+ * Read the visible text content of the first visible element matching `spec`.
+ *
+ * For INPUT/TEXTAREA/SELECT elements, returns `.value`.
+ * For all other elements, returns `.textContent` / `.innerText` trimmed.
+ * Returns ok:false + error when no element is found.
+ */
+export function readText(spec: SelectorSpec): ReadTextResult {
+  const el = resolveElement(spec);
+  if (!el) {
+    return { ok: false, error: `No visible element matching: ${JSON.stringify(spec)}` };
+  }
+  try {
+    let text: string;
+    if (VALUE_TAGS.has(el.tagName)) {
+      text = (el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value ?? "";
+    } else {
+      // Prefer innerText (rendered text) when available; fall back to textContent
+      text =
+        ((el as HTMLElement).innerText ?? (el as HTMLElement).textContent ?? "").trim();
+    }
+    return { ok: true, text: text.trim() };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getElementCoords
+// ---------------------------------------------------------------------------
+
+export interface GetElementCoordsResult {
+  ok: boolean;
+  x?: number;
+  y?: number;
+  error?: string;
+}
+
+/**
+ * Return the viewport-center coordinates of the first visible element matching `spec`.
+ *
+ * Uses `getBoundingClientRect()`:
+ *   x = left + width  / 2  (horizontal center)
+ *   y = top  + height / 2  (vertical center)
+ *
+ * Returns ok:false + error when no element is found or the element has a zero-area rect.
+ */
+export function getElementCoords(spec: SelectorSpec): GetElementCoordsResult {
+  const el = resolveElement(spec);
+  if (!el) {
+    return { ok: false, error: `No visible element matching: ${JSON.stringify(spec)}` };
+  }
+  try {
+    const rect = (el as HTMLElement).getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) {
+      return { ok: false, error: `Element has zero-area bounding rect: ${JSON.stringify(spec)}` };
+    }
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    return { ok: true, x, y };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // domDigest — lightweight page summary for auto-attach and readPage
 // ---------------------------------------------------------------------------
 

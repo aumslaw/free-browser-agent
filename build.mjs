@@ -11,7 +11,9 @@ const ROOT = new URL(".", import.meta.url).pathname.replace(/^\//, "");
 const DIST = join(ROOT, "dist");
 
 console.log("[build] running vite build...");
-execSync("vite build", { stdio: "inherit", cwd: ROOT });
+// Use `npx --no-install` so the local node_modules/.bin/vite resolves even when
+// `vite` is not on the global PATH (i.e. `node build.mjs` run directly, not via pnpm).
+execSync("npx --no-install vite build", { stdio: "inherit", cwd: ROOT, shell: true });
 
 console.log("[build] copying manifest + icons into dist/...");
 if (!existsSync(DIST)) mkdirSync(DIST, { recursive: true });
