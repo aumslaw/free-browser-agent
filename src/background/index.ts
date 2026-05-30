@@ -145,12 +145,15 @@ chrome.runtime.onMessage.addListener(
           });
 
           if (!ac.signal.aborted) {
-            postToSidePanel({ kind: "agent:reply", tabId, message: finalMessage });
+            postToSidePanel({ kind: "agent:status", phase: "done", tabId, message: finalMessage });
           }
         } catch (err) {
           if (!ac.signal.aborted) {
             const error = err instanceof Error ? err.message : String(err);
-            postToSidePanel({ kind: "agent:error", tabId, error });
+            // App.tsx's listener only handles {kind:"agent:status", phase:"error"}. Posting a
+            // bare {kind:"agent:error"} (the prior shape) was silently dropped — leaving the side
+            // panel stuck on "Thinking…" forever on ANY loop failure. Post the shape the UI reads.
+            postToSidePanel({ kind: "agent:status", phase: "error", tabId, error });
           }
         } finally {
           abortControllers.delete(tabId);

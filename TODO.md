@@ -21,7 +21,20 @@ Format: `- [ ]` open, `- [x]` done (with date + commit), `- [~]` partial.
 
 ## P1 — next up
 
-_(none currently — BL-DOMOPS-READTEXT shipped 2026-05-28)_
+_(none currently — BL-DOMOPS-READTEXT shipped 2026-05-28; re-verified 2026-05-30: tsc clean, 283/283 vitest green. The only open item BL-ONB-E2E is human-only and cannot be agent-automated.)_
+
+## P2 — capability extensions
+
+- [ ] **[BL-CHAT-TRANSPORT-VISUAL]** (small) Visually confirm in a REAL Chrome that the SW→panel
+  `runtime.sendMessage` broadcast renders the reply (open the actual side panel, onboard a Groq key,
+  send a message, watch the bubble appear). EVERYTHING ELSE is now proven by real execution: the chat
+  BRAIN (saveKey-encrypt → router decrypt → chrome-ai correctly skipped → real GroqProvider dispatch
+  with the decrypted Bearer key → response parse → `runAgentLoop` returns the reply) is covered by
+  `test/chat-brain-integration.test.ts` (real modules, only fetch+chrome.storage mocked), and the
+  render/error handlers are source-verified after the 2026-05-30 wiring fixes (chrome-ai
+  string-availability, `agent:reply`→`agent:status/done`, `agent:error`→`agent:status/error`). The
+  ONLY thing not automatable is the SW→extension-page broadcast transport, which Playwright cannot
+  deliver to a panel opened as a tab (proven harness gap) but which is a production-standard channel.
 
 ## Done (last 30 days)
 

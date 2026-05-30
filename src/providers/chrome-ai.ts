@@ -74,8 +74,15 @@ function getLanguageModelAPI(): LanguageModelStatic | null {
 }
 
 /**
- * Returns true if Gemini Nano is available in the current context.
+ * Returns true if Gemini Nano is available (or downloadable) in the current context.
  * Never throws -- returns false on any error.
+ *
+ * When no availability/capabilities API is present on the LanguageModel global,
+ * we probe a short-timeout session creation rather than blindly returning true.
+ * In Playwright's headless Chromium the LanguageModel global may be present but
+ * Gemini Nano is not installed; without the probe the router would select chrome-ai
+ * first and then hang indefinitely in dispatchChromeAIViaOffscreen waiting for an
+ * offscreen document that can never respond.
  */
 export async function isChromeAIAvailable(): Promise<boolean> {
   try {
@@ -92,8 +99,23 @@ export async function isChromeAIAvailable(): Promise<boolean> {
       return caps.available !== "unavailable";
     }
 
-    // API exists but has no availability check -- assume it works
-    return true;
+    // API exists but has no availability/capabilities check.
+    // Probe a session creation with a 2s timeout; treat any error or timeout
+    // as "not available" to avoid hanging the router in headless/test environments.
+    return await new Promise<boolean>((resolve) => {
+      const timer = setTimeout(() => resolve(false), 2000);
+      lm.create({}).then(
+        (session) => {
+          clearTimeout(timer);
+          session.destroy?.();
+          resolve(true);
+        },
+        () => {
+          clearTimeout(timer);
+          resolve(false);
+        },
+      );
+    });
   } catch {
     return false;
   }
