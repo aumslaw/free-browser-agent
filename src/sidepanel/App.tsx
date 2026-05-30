@@ -79,7 +79,7 @@ function RoutingBadge({ via }: { via: string }) {
 
 function Spinner() {
   return (
-    <svg class="animate-spin h-3 w-3 text-brand-400 inline-block" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg class="animate-spin h-3 w-3 inline-block" style="color:#818cf8" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
     </svg>
@@ -178,22 +178,22 @@ function ToolCallBubble({ toolName, toolArgs, toolResult, toolOk }: ToolCallBubb
     <div class="msg-tool">
       <button class="w-full text-left flex items-center gap-2 focus:outline-none" onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
         {pending ? <Spinner /> : toolOk ? <span class="text-green-400">✓</span> : <span class="text-red-400">✗</span>}
-        <span class="text-brand-400 font-semibold">{toolName}</span>
-        {argPreview && <span class="text-gray-500 truncate text-[10px]">({argPreview})</span>}
-        <span class="ml-auto text-gray-600 text-[10px]">{expanded ? "▲" : "▼"}</span>
+        <span class="font-semibold" style="color:#818cf8">{toolName}</span>
+        {argPreview && <span class="text-slate-500 truncate text-[10px]">({argPreview})</span>}
+        <span class="ml-auto text-slate-600 text-[10px]">{expanded ? "^" : "v"}</span>
       </button>
       {expanded && (
         <div class="mt-2 space-y-1">
           {toolArgs && (
             <div>
-              <div class="text-gray-500 text-[10px] uppercase tracking-wide mb-0.5">args</div>
-              <pre class="text-gray-300 text-[10px] overflow-auto max-h-24 whitespace-pre-wrap">{JSON.stringify(toolArgs, null, 2)}</pre>
+              <div class="text-slate-500 text-[10px] uppercase tracking-wide mb-0.5">args</div>
+              <pre class="text-slate-300 text-[10px] overflow-auto max-h-24 whitespace-pre-wrap">{JSON.stringify(toolArgs, null, 2)}</pre>
             </div>
           )}
           {toolResult !== undefined && (
             <div>
-              <div class="text-gray-500 text-[10px] uppercase tracking-wide mb-0.5">result</div>
-              <pre class="text-gray-300 text-[10px] overflow-auto max-h-24 whitespace-pre-wrap">{toolResult}</pre>
+              <div class="text-slate-500 text-[10px] uppercase tracking-wide mb-0.5">result</div>
+              <pre class="text-slate-300 text-[10px] overflow-auto max-h-24 whitespace-pre-wrap">{toolResult}</pre>
             </div>
           )}
         </div>
@@ -242,10 +242,10 @@ function AgentPhaseIndicator({ phase, iteration }: { phase: string; iteration?: 
     error: "Error",
   };
   return (
-    <div class="flex items-center gap-2 text-xs text-gray-500 py-1 px-2">
+    <div class="flex items-center gap-2 text-xs text-slate-500 py-1 px-2">
       {phase !== "done" && phase !== "error" && <Spinner />}
       <span>{labels[phase] ?? phase}</span>
-      {iteration !== undefined && iteration > 1 && <span class="text-gray-600">· step {iteration}</span>}
+      {iteration !== undefined && iteration > 1 && <span class="text-slate-600">· step {iteration}</span>}
     </div>
   );
 }
@@ -268,10 +268,10 @@ function Header({
   agentRunning: boolean;
 }) {
   return (
-    <header class="flex items-center gap-2 px-3 py-2 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-sm flex-shrink-0">
+    <header class="flex items-center gap-2 px-3 py-2 flex-shrink-0 sticky top-0 z-10" style="backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgba(15,23,42,0.65);border-bottom:1px solid rgba(255,255,255,0.06)">
       <button
         data-testid="history-toggle"
-        class="p-1.5 rounded-md text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors focus-ring"
+        class="p-1.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors focus-ring"
         onClick={onToggleHistory}
         title="Conversation history"
         aria-label="Conversation history"
@@ -279,24 +279,24 @@ function Header({
         <MenuIcon />
       </button>
       <div class="flex items-center gap-2 flex-1 min-w-0">
-        <div class="w-5 h-5 rounded-md bg-brand-600 flex items-center justify-center flex-shrink-0">
+        <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#38bdf8,#818cf8,#a78bfa);box-shadow:0 0 10px rgba(129,140,248,0.5)">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" class="text-white" aria-hidden="true">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
         </div>
-        <span class="text-sm font-semibold text-gray-100 truncate">Free Browser Agent</span>
+        <span class="text-sm font-semibold text-slate-100 truncate tracking-tight">Free Browser Agent</span>
       </div>
       <div class="flex items-center gap-1">
         {agentRunning && (
-          <button class="flex items-center gap-1 px-2 py-1 rounded-md text-xs text-red-400 hover:bg-red-900/30 transition-colors focus-ring" onClick={onStopAgent} title="Stop agent">
+          <button class="flex items-center gap-1 px-2 py-1 rounded-xl text-xs text-red-400 hover:bg-red-900/30 transition-colors focus-ring" onClick={onStopAgent} title="Stop agent">
             <StopIcon />
             Stop
           </button>
         )}
-        <button data-testid="new-chat-header" class="p-1.5 rounded-md text-gray-400 hover:text-brand-400 hover:bg-gray-800 transition-colors focus-ring" onClick={onNewChat} title="New chat" aria-label="New chat">
+        <button data-testid="new-chat-header" class="p-1.5 rounded-xl text-slate-400 hover:text-sky-400 hover:bg-white/10 transition-colors focus-ring" onClick={onNewChat} title="New chat" aria-label="New chat">
           <PlusIcon />
         </button>
-        <button class="p-1.5 rounded-md text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors focus-ring" onClick={onOpenSettings} title="Settings" aria-label="Open settings">
+        <button class="p-1.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors focus-ring" onClick={onOpenSettings} title="Settings" aria-label="Open settings">
           <GearIcon />
         </button>
       </div>
@@ -328,35 +328,36 @@ function HistorySidebar({
   if (!open) return null;
   return (
     <div class="absolute inset-0 z-20 flex">
-      <div class="w-72 max-w-[80%] h-full bg-gray-900 border-r border-gray-800 flex flex-col shadow-2xl">
-        <div class="flex items-center justify-between px-3 py-2.5 border-b border-gray-800">
-          <span class="text-xs font-semibold text-gray-300 tracking-wide">History</span>
-          <button onClick={onClose} title="Close" class="p-1 rounded text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors focus-ring">
+      <div class="w-72 max-w-[80%] h-full flex flex-col shadow-2xl" style="background:rgba(15,23,42,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,0.07)">
+        <div class="flex items-center justify-between px-3 py-2.5" style="border-bottom:1px solid rgba(255,255,255,0.07)">
+          <span class="text-xs font-semibold text-slate-300 tracking-wide">History</span>
+          <button onClick={onClose} title="Close" class="p-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/10 transition-colors focus-ring">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
-        <button data-testid="new-chat" onClick={onNew} class="m-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white hover:bg-brand-500 active:scale-[0.98] transition-all focus-ring">
+        <button data-testid="new-chat" onClick={onNew} class="m-2 flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-white active:scale-[0.98] transition-all focus-ring" style="background:linear-gradient(135deg,#38bdf8,#4f46e5);box-shadow:0 2px 12px rgba(99,102,241,0.3)">
           <PlusIcon />
           New chat
         </button>
         <div class="flex-1 overflow-y-auto px-2 pb-2 flex flex-col gap-0.5">
           {conversations.length === 0 ? (
-            <p class="text-xs text-gray-600 text-center mt-4">No conversations yet</p>
+            <p class="text-xs text-slate-600 text-center mt-4">No conversations yet</p>
           ) : (
             conversations.map((c) => (
               <div
                 key={c.id}
                 data-testid="conversation-item"
                 onClick={() => onSelect(c.id)}
-                class={"group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-colors " + (c.id === activeId ? "bg-brand-600/15 border border-brand-600/30" : "hover:bg-gray-800 border border-transparent")}
+                class={"group flex items-center gap-2 px-2.5 py-2 rounded-xl cursor-pointer transition-all border " + (c.id === activeId ? "" : "hover:bg-white/5 border-transparent")}
+                style={c.id === activeId ? "background:rgba(129,140,248,0.12);border-color:rgba(129,140,248,0.3)" : ""}
               >
                 <div class="flex-1 min-w-0">
-                  <p class="text-xs text-gray-200 truncate m-0">{c.title}</p>
-                  <p class="text-[10px] text-gray-500 m-0">{relTime(c.updatedAt)}</p>
+                  <p class="text-xs text-slate-200 truncate m-0">{c.title}</p>
+                  <p class="text-[10px] text-slate-500 m-0">{relTime(c.updatedAt)}</p>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} title="Delete conversation" class="opacity-0 group-hover:opacity-100 p-1 rounded text-gray-500 hover:text-red-400 hover:bg-gray-800 transition-all">
+                <button onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} title="Delete conversation" class="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-500 hover:text-red-400 hover:bg-white/10 transition-all">
                   <TrashIcon />
                 </button>
               </div>
@@ -465,7 +466,7 @@ function InputArea({ onSend, disabled }: { onSend: (text: string, attachments?: 
 
   return (
     <div
-      class="flex-shrink-0 border-t border-gray-800/60 bg-gray-950/80 backdrop-blur-sm p-2"
+      class="flex-shrink-0 p-2" style="border-top:1px solid rgba(255,255,255,0.06);background:rgba(11,15,26,0.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
@@ -487,7 +488,7 @@ function InputArea({ onSend, disabled }: { onSend: (text: string, attachments?: 
             <span
               key={`${att.name}-${idx}`}
               data-testid="attachment-chip"
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-gray-800 border border-gray-700 text-gray-300"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-slate-300" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);backdrop-filter:blur(8px)"
             >
               <span class="max-w-[120px] truncate">{att.name}</span>
               <button
@@ -503,12 +504,12 @@ function InputArea({ onSend, disabled }: { onSend: (text: string, attachments?: 
         </div>
       )}
 
-      <div class="flex items-end gap-2 bg-gray-900 rounded-xl px-3 py-2 border border-gray-700/50 focus-within:border-brand-600/60 transition-colors">
+      <div class="flex items-end gap-2 px-3 py-2 rounded-3xl transition-all duration-200" style="background:rgba(255,255,255,0.06);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.10);box-shadow:0 4px 24px rgba(0,0,0,0.2)">
         {/* Paperclip attach button */}
         <button
           data-testid="attach"
           type="button"
-          class="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-brand-400 transition-all focus-ring"
+          class="flex-shrink-0 p-1.5 rounded-xl text-slate-400 hover:text-sky-400 hover:bg-white/10 transition-all focus-ring active:scale-95"
           onClick={handleAttachClick}
           title="Attach file (image, text, PDF)"
           aria-label="Attach file"
@@ -519,7 +520,7 @@ function InputArea({ onSend, disabled }: { onSend: (text: string, attachments?: 
 
         <textarea
           ref={textareaRef}
-          class="flex-1 bg-transparent text-sm text-gray-100 placeholder-gray-600 resize-none outline-none min-h-[24px] max-h-[160px] leading-relaxed"
+          class="flex-1 bg-transparent text-sm text-slate-100 resize-none outline-none min-h-[24px] max-h-[160px] leading-relaxed"
           placeholder={disabled ? "Agent is running…" : "Ask the agent to do something…"}
           value={value}
           onInput={(e) => setValue((e.target as HTMLTextAreaElement).value)}
@@ -532,7 +533,8 @@ function InputArea({ onSend, disabled }: { onSend: (text: string, attachments?: 
         {speech.supported && (
           <button
             data-testid="mic"
-            class={`flex-shrink-0 p-1.5 rounded-lg transition-all focus-ring ${speech.listening ? "text-brand-400 animate-pulse" : "text-gray-400 hover:text-brand-400"}`}
+            class={`flex-shrink-0 p-1.5 rounded-xl transition-all focus-ring active:scale-95 ${speech.listening ? "animate-pulse" : "text-slate-400 hover:text-sky-400 hover:bg-white/10"}`}
+            style={speech.listening ? "color:#818cf8" : ""}
             onClick={handleMic}
             title={speech.listening ? "Stop dictation" : "Start voice dictation"}
             aria-label={speech.listening ? "Stop voice dictation" : "Start voice dictation"}
@@ -543,7 +545,10 @@ function InputArea({ onSend, disabled }: { onSend: (text: string, attachments?: 
           </button>
         )}
         <button
-          class={`flex-shrink-0 p-1.5 rounded-lg transition-all focus-ring ${(value.trim() || attachments.length > 0) && !disabled ? "text-white bg-brand-600 hover:bg-brand-500" : "text-gray-600 cursor-not-allowed"}`}
+          class={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 focus-ring ${(value.trim() || attachments.length > 0) && !disabled ? "hover:scale-105 active:scale-95" : "cursor-not-allowed"}`}
+          style={(value.trim() || attachments.length > 0) && !disabled
+            ? "background:linear-gradient(135deg,#38bdf8,#4f46e5);color:white;box-shadow:0 4px 16px rgba(99,102,241,0.35)"
+            : "background:rgba(255,255,255,0.08);color:rgba(148,163,184,0.4)"}
           onClick={submit}
           disabled={(!value.trim() && attachments.length === 0) || disabled}
           aria-label="Send message"
@@ -551,7 +556,7 @@ function InputArea({ onSend, disabled }: { onSend: (text: string, attachments?: 
           <SendIcon />
         </button>
       </div>
-      <p class="text-[10px] text-gray-700 mt-1 px-1">Enter to send · Shift+Enter for newline · Drag & drop or paste images</p>
+      <p class="text-[10px] text-slate-600 mt-1 px-1">Enter to send · Shift+Enter for newline · Drag &amp; drop or paste images</p>
     </div>
   );
 }
@@ -571,18 +576,27 @@ function WelcomeScreen({ onSend }: { onSend: (text: string) => void }) {
   return (
     <div class="flex flex-col items-center justify-center h-full px-4 gap-6">
       <div class="text-center">
-        <div class="w-12 h-12 rounded-2xl bg-brand-600/20 border border-brand-600/30 flex items-center justify-center mx-auto mb-3">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-brand-400" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v4l3 3" />
-          </svg>
+        <div class="relative mx-auto mb-4" style="width:64px;height:64px">
+          <div class="absolute inset-0 rounded-3xl animate-glow-pulse pointer-events-none" style="background:linear-gradient(135deg,rgba(56,189,248,0.25),rgba(129,140,248,0.25));filter:blur(10px)" />
+          <div class="relative w-16 h-16 rounded-3xl flex items-center justify-center" style="background:rgba(255,255,255,0.06);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.12);box-shadow:0 4px 24px rgba(99,102,241,0.2)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="url(#welcome-grad)" stroke-width="1.5" aria-hidden="true">
+              <defs>
+                <linearGradient id="welcome-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#818cf8" />
+                </linearGradient>
+              </defs>
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4l3 3" />
+            </svg>
+          </div>
         </div>
-        <h2 class="text-sm font-semibold text-gray-200 mb-1">Free Browser Agent</h2>
-        <p class="text-xs text-gray-500 max-w-[200px]">Tell me what to do on this page and I will handle it.</p>
+        <h2 class="text-sm font-semibold text-slate-100 mb-1 tracking-tight">Free Browser Agent</h2>
+        <p class="text-xs text-slate-500 max-w-[200px]">Tell me what to do on this page and I will handle it.</p>
       </div>
       <div class="w-full space-y-2">
         {EXAMPLE_PROMPTS.map((p) => (
-          <button key={p} class="w-full text-left text-xs text-gray-400 px-3 py-2 rounded-lg bg-gray-900/60 border border-gray-800/60 hover:border-brand-700/40 hover:text-gray-300 hover:bg-gray-900 transition-all focus-ring" onClick={() => onSend(p)}>
+          <button key={p} class="w-full text-left text-xs text-slate-400 px-3 py-2 rounded-xl transition-all duration-200 hover:text-slate-200 focus-ring active:scale-[0.98]" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)" onClick={() => onSend(p)}>
             {p}
           </button>
         ))}
@@ -811,7 +825,7 @@ export default function App() {
   const showWelcome = messages.length === 0 && !agentRunning;
 
   return (
-    <div class="relative flex flex-col h-full bg-gray-950 text-gray-100">
+    <div class="relative flex flex-col h-full" style="background:radial-gradient(125% 125% at 50% 0%,#1e293b 0%,#0b0f1a 55%);color:#f1f5f9">
       <HistorySidebar
         open={historyOpen}
         conversations={conversations}
@@ -831,9 +845,9 @@ export default function App() {
       />
 
       {errorBanner && (
-        <div class="flex items-center gap-2 px-3 py-2 bg-red-900/30 border-b border-red-800/40 text-xs text-red-300 flex-shrink-0">
+        <div class="flex items-center gap-2 px-3 py-2 text-xs flex-shrink-0" style="background:rgba(127,29,29,0.35);border-bottom:1px solid rgba(239,68,68,0.25);color:#fca5a5">
           <span class="flex-1">{errorBanner}</span>
-          <button class="text-red-400 hover:text-red-200 transition-colors" onClick={() => setErrorBanner(null)} aria-label="Dismiss error">✕</button>
+          <button class="text-red-400 hover:text-red-200 transition-colors" onClick={() => setErrorBanner(null)} aria-label="Dismiss error">x</button>
         </div>
       )}
 

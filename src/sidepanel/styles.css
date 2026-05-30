@@ -1,5 +1,5 @@
 /* src/sidepanel/styles.css
- * Tailwind directives + global overrides for the side-panel chat UI.
+ * Tailwind directives + bubbly-sleek dark glassy overrides for the side-panel chat UI.
  * Dark mode is the default (html.dark class applied by App.tsx on mount).
  */
 
@@ -7,7 +7,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---- scrollbar customisation (Webkit) ---- */
+/* ---- scrollbar customisation (Webkit) — subtle thin ---- */
 @layer base {
   :root {
     color-scheme: dark;
@@ -17,71 +17,95 @@
   body,
   #root {
     @apply h-full w-full m-0 p-0 overflow-hidden;
-    @apply bg-gray-950 text-gray-100;
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    background: radial-gradient(125% 125% at 50% 0%, #1e293b 0%, #0b0f1a 55%);
+    color: #f1f5f9;
+    font-family: "Raleway", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   }
 
   * {
     box-sizing: border-box;
   }
 
-  /* Slim scrollbar */
+  /* Slim subtle scrollbar */
   ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-gray-900;
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-700 rounded-full;
+    @apply bg-white/10 rounded-full;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-500;
+    @apply bg-white/20;
   }
 }
 
-/* ---- chat message bubbles ---- */
+/* ---- chat message bubbles (bubbly sleek) ---- */
 @layer components {
+  /* Base bubble shape — very rounded = "bubbly" */
   .msg-bubble {
-    @apply max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed break-words;
+    @apply max-w-[85%] px-4 py-2.5 text-sm leading-relaxed break-words;
+    border-radius: 22px;
+    animation: bubble-in 0.28s cubic-bezier(.22,1,.36,1) both;
   }
 
+  /* User bubble: sky→indigo gradient, rounded-br tail */
   .msg-user {
-    @apply msg-bubble bg-brand-600 text-white self-end rounded-br-sm;
+    @apply msg-bubble text-white self-end;
+    background: linear-gradient(135deg, #38bdf8 0%, #4f46e5 100%);
+    border-bottom-right-radius: 6px;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.25);
   }
 
+  /* Assistant bubble: glassy, rounded-bl tail */
   .msg-assistant {
-    @apply msg-bubble bg-gray-800 text-gray-100 self-start rounded-bl-sm;
+    @apply msg-bubble text-slate-100 self-start;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-bottom-left-radius: 6px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
   }
 
+  /* Tool bubble: mono, slightly dimmer glassy */
   .msg-tool {
-    @apply w-full rounded-xl px-3 py-2 text-xs font-mono
-           bg-gray-900/80 border border-gray-700/60 text-gray-400
-           self-start;
+    @apply w-full px-3 py-2 text-xs font-mono text-slate-300 self-start;
+    background: rgba(30, 41, 59, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    animation: bubble-in 0.28s cubic-bezier(.22,1,.36,1) both;
   }
 
+  /* System note */
   .msg-system-note {
-    @apply w-full text-center text-xs text-gray-500 py-1;
+    @apply w-full text-center text-xs text-slate-500 py-1;
   }
 
-  /* "X-Routed-Via" badge */
+  /* X-Routed-Via badge */
   .routing-badge {
     @apply inline-flex items-center gap-1 mt-1.5 px-2 py-0.5
-           text-[10px] font-mono text-brand-400
-           bg-brand-950/60 border border-brand-800/40 rounded-full;
+           text-[10px] font-mono;
+    color: #818cf8;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 999px;
   }
 
   /* Typing / streaming cursor */
   .typing-cursor::after {
     content: "▍";
-    @apply inline-block text-brand-400 animate-pulse;
+    @apply inline-block animate-pulse;
+    color: #818cf8;
   }
 }
 
 /* ---- focus ring override ---- */
 @layer utilities {
   .focus-ring {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-950;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 focus-visible:ring-offset-1;
+    --tw-ring-offset-color: #0b0f1a;
   }
 }
