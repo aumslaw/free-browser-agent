@@ -98,4 +98,52 @@ describe("chat brain integration (real router + agent loop + keys + Groq provide
     // 5. The loop emitted a "final answer" status (no tool calls).
     expect(onStatus).toHaveBeenCalled();
   });
+
+  it("EXECUTES: LLM returns a click tool-call → the loop dispatches the DOM op to the page → finalizes", async () => {
+    // Capture the dom-ops the agent loop dispatches to the content script, and
+    // simulate a successful content-script response.
+    const dispatched: unknown[] = [];
+    (globalThis as Record<string, any>).chrome.tabs.sendMessage = vi.fn(async (_tabId: number, msg: unknown) => {
+      dispatched.push(msg);
+      return { ok: true, result: 'Clicked "#submit"' };
+    });
+
+    // The mocked LLM: round 1 → call the `click` tool; round 2 → final answer.
+    let call = 0;
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      call++;
+      const message =
+        call === 1
+          ? { role: "assistant", content: null, tool_calls: [{ id: "tc1", type: "function", function: { name: "click", arguments: JSON.stringify({ selector: "#submit" }) } }] }
+          : { role: "assistant", content: "Done — I clicked the submit button." };
+      const finish = call === 1 ? "tool_calls" : "stop";
+      return {
+        ok: true, status: 200, statusText: "OK",
+        json: async () => ({ id: "c", object: "chat.completion", created: 1, model: "llama-3.3-70b-versatile", choices: [{ index: 0, message, finish_reason: finish }], usage: { total_tokens: 5 } }),
+        text: async () => "",
+      } as unknown as Response;
+    }));
+
+    await saveKey("groq", "gsk_exec_key");
+    const router = new Router();
+    router.setPriorityList([{ providerId: "groq", model: "llama-3.3-70b-versatile", key_ids: [], enabled: true }]);
+
+    const actions: string[] = [];
+    const final = await runAgentLoop({
+      messages: [{ role: "user", content: "click the submit button" }],
+      tools: AGENT_TOOLS,
+      tabId: 7,
+      router,
+      onStatus: (s) => actions.push(s.action),
+    });
+
+    // The loop autonomously dispatched the click DOM op to the page (content script)…
+    expect(dispatched.length).toBeGreaterThanOrEqual(1);
+    expect(dispatched[0]).toMatchObject({ kind: "dom-op", payload: { op: "click", selector: "#submit" } });
+    // …took TWO LLM round-trips (decide-to-act, then finalize)…
+    expect(call).toBe(2);
+    expect(actions.some((a) => a.includes("click"))).toBe(true);
+    // …and produced a final answer after the tool result came back.
+    expect(final.content).toContain("clicked the submit button");
+  });
 });
